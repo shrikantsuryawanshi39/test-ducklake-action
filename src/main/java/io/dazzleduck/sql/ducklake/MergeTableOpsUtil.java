@@ -43,7 +43,7 @@ public class MergeTableOpsUtil {
      * change the table id's for the files in the dummy table
      * delete the files in the remove
      * commit the transaction.
-     * open conn --> begin transaction --> execute changes with connectionPool.executeBatch --> commit; close conn.
+     * open Conn --> begin transaction --> execute changes with connectionPool.executeBatch --> commit; close conn.
      */
     public static void replace(String database,
                         long tableId,
