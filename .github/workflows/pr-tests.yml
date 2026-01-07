@@ -11,14 +11,16 @@ jobs:
     name: Ducklake Tests (Ubuntu)
     runs-on: ubuntu-latest
 
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     steps:
-      # 1. Checkout repository
-      - name: Checkout code
+      # 1. Checkout ducklake (project under test)
+      - name: Checkout dazzleduck-ducklake
         uses: actions/checkout@v4
+        with:
+          path: dazzleduck-ducklake
 
-      # 2. Set up Java (match project Java version)
+      # 2. Setup Java 21
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
@@ -26,20 +28,32 @@ jobs:
           java-version: '21'
           cache: maven
 
-      # 3. Verify Docker (required for Testcontainers)
+      # 3. Verify Docker (Testcontainers)
       - name: Verify Docker
         run: |
           docker --version
           docker info
 
-      # 4. Make Maven Wrapper executable
-      - name: Make mvnw executable
-        run: chmod +x mvnw
+      # 4. Checkout dazzleduck-sql-server (dependency repo)
+      - name: Checkout dazzleduck-sql-server
+        uses: actions/checkout@v4
+        with:
+          repository: dazzleduck-web/dazzleduck-sql-server
+          path: dazzleduck-sql-server
 
-      # 5. Run tests
-      - name: Run Maven tests
-        env:
-          TESTCONTAINERS_RYUK_DISABLED: true
-          TESTCONTAINERS_CHECKS_DISABLE: true
+      # 5. Build dazzleduck-sql-server (install SNAPSHOT deps)
+      - name: Build dazzleduck-sql-server
+        working-directory: dazzleduck-sql-server
         run: |
+          chmod +x mvnw
+          ./mvnw clean install \
+            -DskipTests \
+            -Dmaven.javadoc.skip=true \
+            -DskipSources
+
+      # 6. Build & test ducklake
+      - name: Build & test ducklake
+        working-directory: dazzleduck-ducklake
+        run: |
+          chmod +x mvnw
           ./mvnw clean test
